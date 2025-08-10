@@ -32,3 +32,7 @@ I am using Node - 20.10.0
 ## DB information
 
 I am using mongodb atlas so i have added that url in env file
+
+## Push
+
+git push https://<YOUR_PAT>@github.com/harshitsp9/RushBet-Web.git
