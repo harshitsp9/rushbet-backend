@@ -1,0 +1,10 @@
+node_modules
+yarn.lock
+.env
+dist
+.gitlab-ci.yml
+.env.local
+.env.production
+
+.github/
+.teller.yml
