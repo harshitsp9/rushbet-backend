@@ -35,4 +35,4 @@ I am using mongodb atlas so i have added that url in env file
 
 ## Push
 
-git push https://<YOUR_PAT>@github.com/harshitsp9/RushBet-Web.git
+git push https://<YOUR_PAT>@github.com/harshitsp9/rushbet-backend.git
