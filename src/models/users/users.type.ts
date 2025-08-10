@@ -1,23 +1,21 @@
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 interface Users {
   username: string;
   email: string;
-  password?: string; // Optional for telegram users
-  country: string;
-  source: string;
-  sourceId: string;
-  status: string;
-  userAgent: string;
-  authProvider: string; // email or telegram
-  telegramId?: string; // For telegram login
+  password?: string;
+  country?: string; // Made optional
+  authProvider: string;
+  telegramId?: string;
   isEmailVerified: boolean;
+  status: string;
+  source: string;
   lastLogin?: Date;
-  gameId: Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
+  // Removed gameId field
 }
 
-interface UsersDocument extends Users, Document {}
+interface UserDocument extends Users, Document {}
 
-export { Users, UsersDocument };
+export { Users, UserDocument };

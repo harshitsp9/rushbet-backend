@@ -1,19 +1,15 @@
 import { callDepositApi } from '@/helper/commonHelper';
-import { generateCurrentDate } from '@/helper/dateHelper';
 import { addOrUpdateDepositRecord } from '@/helper/firebaseHelper';
 import { asyncHandler } from '@/middleware/async-middleware';
 import DepositModel from '@/models/deposit/deposit.model';
 import GamesModel from '@/models/games/games.model';
-import OfferAvailedModel from '@/models/offerAvailed/offerAvailed.model';
-import OfferBenefitsModel from '@/models/offerBenefits/offerBenefits.model';
-import OffersModel from '@/models/offers/offers.model';
-import { generateGetMatchingOfferPipeline } from '@/pipelines/offerPipeline';
+
 import { PaymentMetadata } from '@/types/types/event.type';
 import { DepositResponse } from '@/types/types/types.common';
 import { generateObjectId } from '@/utils/commonUtils';
 import { errorResponse, HTTP_STATUS_CODES, successResponse } from '@/utils/responseUtils';
 import { Request, Response } from 'express';
-import mongoose, { PipelineStage, Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 
 export const depositBalance = asyncHandler(async (req: Request, res: Response) => {
   // Start a session for transaction
@@ -22,8 +18,7 @@ export const depositBalance = asyncHandler(async (req: Request, res: Response) =
 
   try {
     const { userId, gameId, gameName, provider, userName } = req;
-    const { targetCurrency = 'SATS', amount, offerId } = req.body;
-    let offerDetails = null;
+    const { targetCurrency = 'SATS', amount } = req.body;
 
     const gameData = await GamesModel.findById(gameId).session(session);
     if (!gameData) return errorResponse(res, 'Game does not exist', HTTP_STATUS_CODES.BAD_REQUEST);
@@ -50,30 +45,7 @@ export const depositBalance = asyncHandler(async (req: Request, res: Response) =
       type: 'deposit',
     };
 
-    //if offerId is exist
-    if (offerId) {
-      //fetch offer which implies to given amount and user
-      const pipeline = generateGetMatchingOfferPipeline(gameId, userId, amount, offerId as string) as PipelineStage[];
-      [offerDetails] = await OffersModel.aggregate(pipeline);
-
-      //if offer is eligible then assign that benefit to user
-      if (offerDetails) {
-        const benefitData = await OfferBenefitsModel.findOne({ offerId }).session(session).select('_id');
-        const availedRecord = new OfferAvailedModel({
-          availedAt: generateCurrentDate(),
-          source: 'deposit',
-          sourceId: depositReq?._id,
-          offerId,
-          offerBenefitId: benefitData?._id,
-          userId,
-        });
-        await availedRecord.save({ session });
-        metaData.offerId = offerDetails._id.toString();
-        metaData.offerAvailedId = (availedRecord._id as Types.ObjectId).toString();
-      }
-    }
-
-    const authKey = `Basic ${process.env[`SPEED_AUTH_KEY_${gameData.gameKey}`]}`;
+    const authKey = `Basic ${process.env[`SPEED_AUTH_KEY`]}`;
 
     const body = {
       amount,

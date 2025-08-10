@@ -2,17 +2,13 @@ import { callWithdrawalApi } from '@/helper/commonHelper';
 import { addOrUpdateWithdrawRecord } from '@/helper/firebaseHelper';
 import { asyncHandler } from '@/middleware/async-middleware';
 import BalanceModel from '@/models/balance/balance.model';
-import GamesModel from '@/models/games/games.model';
 import WithdrawModel from '@/models/withdraw/withdraw.model';
 import { WithdrawApiResponse } from '@/types/types/types.common';
 import { formattedBalance, generateObjectId } from '@/utils/commonUtils';
 import { errorResponse, HTTP_STATUS_CODES, successResponse } from '@/utils/responseUtils';
 import { Request, Response } from 'express';
 import mongoose, { Types } from 'mongoose';
-import DepositModel from '@/models/deposit/deposit.model';
 import { currentDayJsObject } from '@/helper/dateHelper';
-import GameEventModel from '@/models/gameEvent/gameEvent.model';
-import { GAME_EVENT_TYPE } from '@/types/enums/enums.common';
 
 export const withdrawBalance = asyncHandler(async (req: Request, res: Response) => {
   const { userId, gameId, userName } = req;
@@ -39,44 +35,6 @@ export const withdrawBalance = asyncHandler(async (req: Request, res: Response) 
     );
   }
 
-  // Check for recent deposit and if a bet was placed after it
-  const lastDeposit = await DepositModel.findOne({ userId, gameId, status: 'paid' })
-    .select('createdAt')
-    .sort({ createdAt: -1 });
-
-  if (lastDeposit) {
-    // Find the *first* bet placed *after* the last deposit
-    const hasPlacedBetAfterDeposit = await GameEventModel.findOne({
-      userId,
-      gameId,
-      eventType: GAME_EVENT_TYPE.BET,
-      createdAt: { $gt: lastDeposit.createdAt }, // This ensures the bet happened *after* deposit
-    }).select('createdAt');
-
-    if (!hasPlacedBetAfterDeposit) {
-      return errorResponse(
-        res,
-        'You must place at least one bet after your last deposit before withdrawing funds.',
-        HTTP_STATUS_CODES.BAD_REQUEST
-      );
-    }
-
-    // Check if the last deposit was made within the last 5 minutes
-    const depositCooldownPassed = currentDayJsObject().isAfter(
-      currentDayJsObject(lastDeposit.createdAt).add(5, 'minute')
-    );
-
-    if (!depositCooldownPassed) {
-      const secondsSinceDeposit = currentDayJsObject().diff(currentDayJsObject(lastDeposit.createdAt), 'second');
-      const remainingMinutes = Math.ceil((300 - secondsSinceDeposit) / 60);
-      return errorResponse(
-        res,
-        `You can withdraw after 5 minutes of your last deposit. Please try again after ${remainingMinutes} minute(s).`,
-        HTTP_STATUS_CODES.BAD_REQUEST
-      );
-    }
-  }
-
   // Validate user balance
   const balanceInfo = await BalanceModel.findOne({ userId, gameId, currency });
   const availableBalance = formattedBalance(balanceInfo?.balance || 0);
@@ -87,11 +45,6 @@ export const withdrawBalance = asyncHandler(async (req: Request, res: Response) 
       HTTP_STATUS_CODES.BAD_REQUEST
     );
   }
-
-  // Validate game and wallet
-  const [gameData] = await Promise.all([GamesModel.findById(gameId)]);
-
-  if (!gameData) return errorResponse(res, 'Game does not exist', HTTP_STATUS_CODES.BAD_REQUEST);
 
   // Start a session for transaction
   const session = await mongoose.startSession();
@@ -117,7 +70,7 @@ export const withdrawBalance = asyncHandler(async (req: Request, res: Response) 
       userId: generateObjectId(userId),
     });
 
-    const authKey = `Basic ${process.env[`SPEED_AUTH_KEY_${gameData.gameKey}`]}`;
+    const authKey = `Basic ${process.env[`SPEED_AUTH_KEY`]}`;
     const body = {
       amount,
       currency: (currency as string).toUpperCase(),
@@ -130,8 +83,6 @@ export const withdrawBalance = asyncHandler(async (req: Request, res: Response) 
         userName,
         withdrawId: withdrawRequest._id,
         type: 'withdraw',
-        gameName: gameData?.name,
-        provider: gameData.provider,
       },
     };
 

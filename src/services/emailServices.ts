@@ -192,12 +192,17 @@ class EmailService {
       © ${new Date().getFullYear()} RushBet. All rights reserved.
     `;
 
-    return this.sendEmail({
-      to: email,
-      subject,
-      html,
-      text,
-    });
+    try {
+      return this.sendEmail({
+        to: email,
+        subject,
+        html,
+        text,
+      });
+    } catch (error) {
+      console.error('Error sending welcome email:', error);
+      return false;
+    }
   }
 
   /**

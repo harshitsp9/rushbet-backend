@@ -1,5 +1,7 @@
 import { body } from 'express-validator';
+import { validateEmailFormat, validatePasswordStrength, validateCountryCode } from '@/utils/authUtils';
 
+// Register validation
 export const registerValidation = [
   body('username')
     .optional()
@@ -11,35 +13,47 @@ export const registerValidation = [
   body('email')
     .isEmail()
     .withMessage('Please provide a valid email address')
-    .normalizeEmail()
     .isLength({ max: 100 })
-    .withMessage('Email must be less than 100 characters'),
+    .withMessage('Email must not exceed 100 characters')
+    .normalizeEmail()
+    .custom(validateEmailFormat),
 
   body('password')
     .isLength({ min: 6, max: 128 })
     .withMessage('Password must be between 6 and 128 characters')
-    .matches(/^(?=.*[A-Za-z])(?=.*\d)/)
-    .withMessage('Password must contain at least one letter and one number'),
+    .custom(validatePasswordStrength),
 
   body('country')
+    .optional()
     .isLength({ min: 3, max: 3 })
     .withMessage('Country code must be exactly 3 characters')
     .matches(/^[A-Z]{3}$/)
-    .withMessage('Country code must be in ISO 3166-1 alpha-3 format (e.g., USA, GBR, IND)'),
-
-  body('gameId').isMongoId().withMessage('Invalid game ID format'),
+    .withMessage('Country code must be in ISO 3166-1 alpha-3 format (e.g., USA, GBR)')
+    .custom(validateCountryCode),
 ];
 
+// Login validation
 export const loginValidation = [
   body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
 
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
+// Refresh token validation
+export const refreshTokenValidation = [
+  body('refreshToken')
+    .notEmpty()
+    .withMessage('Refresh token is required')
+    .isString()
+    .withMessage('Refresh token must be a string'),
+];
+
+// Forgot password validation
 export const forgotPasswordValidation = [
   body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
 ];
 
+// Reset password validation
 export const resetPasswordValidation = [
   body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
 
@@ -51,11 +65,11 @@ export const resetPasswordValidation = [
 
   body('newPassword')
     .isLength({ min: 6, max: 128 })
-    .withMessage('Password must be between 6 and 128 characters')
-    .matches(/^(?=.*[A-Za-z])(?=.*\d)/)
-    .withMessage('Password must contain at least one letter and one number'),
+    .withMessage('New password must be between 6 and 128 characters')
+    .custom(validatePasswordStrength),
 ];
 
+// Telegram login validation
 export const telegramLoginValidation = [
   body('telegramId')
     .notEmpty()
@@ -73,14 +87,15 @@ export const telegramLoginValidation = [
   body('email').optional().isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
 
   body('country')
+    .optional()
     .isLength({ min: 3, max: 3 })
     .withMessage('Country code must be exactly 3 characters')
     .matches(/^[A-Z]{3}$/)
-    .withMessage('Country code must be in ISO 3166-1 alpha-3 format (e.g., USA, GBR, IND)'),
-
-  body('gameId').isMongoId().withMessage('Invalid game ID format'),
+    .withMessage('Country code must be in ISO 3166-1 alpha-3 format (e.g., USA, GBR)')
+    .custom(validateCountryCode),
 ];
 
+// Email verification validation
 export const verifyEmailValidation = [
   body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
 

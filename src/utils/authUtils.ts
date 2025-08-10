@@ -34,7 +34,6 @@ export const generateJWTToken = (userId: string, email: string): string => {
   const payload = {
     userId,
     email,
-    iat: Math.floor(Date.now() / 1000),
   };
 
   return jwt.sign(payload, JWT_SECRET, {

@@ -1,89 +1,80 @@
 import { Schema, model } from 'mongoose';
-import { USER_STATUS_TYPE, AUTH_PROVIDER } from '@/types/enums/enums.common';
-import { UsersDocument } from './users.type';
+import { AUTH_PROVIDER, USER_STATUS_TYPE } from '@/types/enums/enums.common';
+import { UserDocument } from './users.type';
 
-const userSchema = new Schema<UsersDocument>(
+const userSchema = new Schema<UserDocument>(
   {
     username: {
       type: String,
-      maxlength: 50,
       required: true,
       unique: true,
+      trim: true,
+      minlength: 3,
+      maxlength: 50,
     },
     email: {
       type: String,
-      maxlength: 100,
       required: true,
       unique: true,
       lowercase: true,
+      trim: true,
     },
     password: {
       type: String,
       minlength: 6,
-      // Required only for email authentication
     },
     country: {
       type: String,
-      maxlength: 3, // Country code (ISO 3166-1 alpha-3)
-      required: true,
       uppercase: true,
+      minlength: 3,
+      maxlength: 3,
+      // Removed required: true to make it optional
     },
     authProvider: {
       type: String,
       enum: Object.values(AUTH_PROVIDER),
       required: true,
-      default: AUTH_PROVIDER.EMAIL,
     },
     telegramId: {
       type: String,
-      sparse: true, // Allows multiple null values but unique non-null values
       unique: true,
+      sparse: true,
     },
     isEmailVerified: {
       type: Boolean,
       default: false,
-    },
-    lastLogin: {
-      type: Date,
-    },
-    source: {
-      type: String,
-      default: 'rushbet',
-    },
-    sourceId: {
-      type: String,
-    },
-    userAgent: {
-      type: String,
     },
     status: {
       type: String,
       enum: Object.values(USER_STATUS_TYPE),
       default: USER_STATUS_TYPE.ACTIVE,
     },
-    gameId: {
-      type: Schema.Types.ObjectId,
-      ref: 'games',
-      required: true,
+    source: {
+      type: String,
+      default: 'rushbet',
     },
+    lastLogin: {
+      type: Date,
+    },
+    // Removed gameId field completely
   },
   {
     timestamps: true,
   }
 );
 
-// Ensure password is required for email authentication
+// Pre-save hook to validate required fields based on auth provider
 userSchema.pre('save', function (next) {
   if (this.authProvider === AUTH_PROVIDER.EMAIL && !this.password) {
-    next(new Error('Password is required for email authentication'));
+    return next(new Error('Password is required for email authentication'));
   }
   if (this.authProvider === AUTH_PROVIDER.TELEGRAM && !this.telegramId) {
-    next(new Error('Telegram ID is required for telegram authentication'));
+    return next(new Error('Telegram ID is required for telegram authentication'));
   }
   next();
 });
 
 // Model creation
-const UserModel = model<UsersDocument>('users', userSchema);
+const UserModel = model<UserDocument>('users', userSchema);
 
 export default UserModel;

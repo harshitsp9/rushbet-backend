@@ -100,8 +100,8 @@ export const comparePassword = async (password: string, hashedPassword: string):
 };
 
 export const generateAuthTokens = <T extends Partial<JwtPayloadFieldType>>(payload: T): AuthTokens => {
-  const accessToken = generateJwtToken(payload, '1d');
-  const refreshToken = generateJwtToken(payload, '10d');
+  const accessToken = generateJwtToken(payload, '1d'); // 1 day for access token
+  const refreshToken = generateJwtToken(payload, '30d'); // 30 days for refresh token
   const token = {
     accessToken: accessToken.token,
     refreshToken: refreshToken.token,

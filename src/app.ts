@@ -9,6 +9,7 @@ import routes from './routes/index';
 import path from 'path';
 import mongooseInit from './config/db';
 import config from './config/envConfig';
+import { setupSwagger } from './swagger/index';
 // import bodyParser from 'body-parser';
 import http from 'http'; // Import HTTP for WebSocket integration
 
@@ -58,6 +59,9 @@ app.set('trust proxy', 1); // Adjust based on your setup, for most cases behind 
 mongooseInit()
   .then(() => console.log('DB connection established'))
   .catch((error) => console.log('DB connection error', error));
+
+// Setup Swagger Documentation
+setupSwagger(app);
 
 // Setup routing
 app.use('/api/v1', routes);
