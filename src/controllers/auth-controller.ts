@@ -84,7 +84,7 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
   // Find user by email
   const user = await UserModel.findOne({ email });
   if (!user) {
-    return errorResponse(res, 'Invalid email or password', HTTP_STATUS_CODES.UNAUTHORIZED);
+    return errorResponse(res, 'Invalid email or password', HTTP_STATUS_CODES.BAD_REQUEST);
   }
 
   // Check if user is active
@@ -97,14 +97,14 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
     return errorResponse(
       res,
       'Invalid login method. Please use the correct authentication method',
-      HTTP_STATUS_CODES.UNAUTHORIZED
+      HTTP_STATUS_CODES.BAD_REQUEST
     );
   }
 
   // Compare password
   const isPasswordValid = await comparePassword(password, user.password);
   if (!isPasswordValid) {
-    return errorResponse(res, 'Invalid email or password', HTTP_STATUS_CODES.UNAUTHORIZED);
+    return errorResponse(res, 'Invalid email or password', HTTP_STATUS_CODES.BAD_REQUEST);
   }
 
   // Update last login
@@ -152,7 +152,7 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
     // Verify the refresh token
     const decoded = commonVerifyJwtToken(providedRefreshToken);
     if (!decoded || !decoded.userId) {
-      return errorResponse(res, 'Invalid refresh token', HTTP_STATUS_CODES.UNAUTHORIZED);
+      return errorResponse(res, 'Invalid refresh token', HTTP_STATUS_CODES.BAD_REQUEST);
     }
 
     // Find user by ID
@@ -179,7 +179,7 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
 
     return successResponse(res, 'Tokens refreshed successfully', HTTP_STATUS_CODES.OK, responseData);
   } catch (error) {
-    return errorResponse(res, 'Invalid or expired refresh token', HTTP_STATUS_CODES.UNAUTHORIZED);
+    return errorResponse(res, 'Invalid or expired refresh token', HTTP_STATUS_CODES.BAD_REQUEST);
   }
 });
 

@@ -11,7 +11,7 @@ export const getUserProfile = asyncHandler(async (req: Request, res: Response) =
   const userId = req.userId;
 
   if (!userId) {
-    return errorResponse(res, 'Authentication required', HTTP_STATUS_CODES.UNAUTHORIZED);
+    return errorResponse(res, 'Authentication required', HTTP_STATUS_CODES.BAD_REQUEST);
   }
 
   // Find user by ID
