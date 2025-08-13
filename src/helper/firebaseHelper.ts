@@ -57,46 +57,27 @@ export async function addOrUpdateWithdrawRecord(accId: string, withdrawId: strin
   }
 }
 
-// Common function to add current paying record
-export async function firebaseAddPlayingRecord(gameId: string, eventId: string, eventData: any) {
-  const gameEventRef = firebaseDatabase.collection('games').doc(gameId).collection('events').doc(eventId);
-  const commonEventRef = firebaseDatabase.collection('events').doc(eventId);
+// Common function to add or update balance record
+export async function addOrUpdateBalanceRecord(accId: string, balanceId: string, balanceData: any) {
+  accId = String(accId);
+  balanceId = String(balanceId);
+  const balanceRef = firebaseDatabase.collection('account').doc(accId).collection('balance').doc(balanceId);
 
-  const timestamp = admin.firestore.FieldValue.serverTimestamp();
+  // Check if the deposit document exists
+  const doc = await balanceRef.get();
 
-  // Create a new document if it doesn't exist
-  await gameEventRef.set({
-    ...eventData,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  });
-
-  await commonEventRef.set({
-    ...eventData,
-    gameId: gameId,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  });
-}
-
-export async function maintainEventLimit(eventCollectionRef: admin.firestore.CollectionReference) {
-  try {
-    // Get all documents ordered by createdAt in ascending order
-    const eventsSnapshot = await eventCollectionRef.orderBy('createdAt', 'asc').get();
-
-    // If we have more than 20 documents
-    if (eventsSnapshot.size > 20) {
-      // Calculate how many documents to delete
-      const docsToDelete = eventsSnapshot.size - 20;
-
-      // Get the oldest documents to delete
-      const oldestDocs = eventsSnapshot.docs.slice(0, docsToDelete);
-
-      // Delete the oldest documents
-      const deletePromises = oldestDocs.map((doc) => doc.ref.delete());
-      await Promise.all(deletePromises);
-    }
-  } catch (error) {
-    console.error('Error maintaining event limit:', error);
+  if (doc.exists) {
+    // Update the document if it exists
+    await balanceRef.update({
+      ...balanceData,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(), // Automatically add update timestamp
+    });
+  } else {
+    // Create a new document if it doesn't exist
+    await balanceRef.set({
+      ...balanceData,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(), // Automatically add creation timestamp
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(), // Automatically add creation timestamp
+    });
   }
 }

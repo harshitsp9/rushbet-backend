@@ -8,6 +8,7 @@ import { generateAuthTokens, commonVerifyJwtToken } from '@/utils/securityUtils'
 import { AUTH_PROVIDER, OTP_TYPE, OTP_STATUS, USER_STATUS_TYPE } from '@/types/enums/enums.common';
 import { asyncHandler } from '@/middleware/async-middleware';
 import { successResponse, errorResponse, HTTP_STATUS_CODES } from '@/utils/responseUtils';
+import { createInitialBalanceRecord } from '@/helper/balanceHelper';
 
 /**
  * Register user with email and password
@@ -44,6 +45,9 @@ export const registerUser = asyncHandler(async (req: Request, res: Response) => 
   });
 
   await newUser.save();
+
+  // Create initial balance record in background (without await)
+  createInitialBalanceRecord(newUser._id as Types.ObjectId);
 
   // Generate access and refresh tokens
   const tokens = generateAuthTokens({
@@ -354,6 +358,9 @@ export const telegramLogin = asyncHandler(async (req: Request, res: Response) =>
     });
 
     await newUser.save();
+
+    // Create initial balance record in background (without await)
+    createInitialBalanceRecord(newUser._id as Types.ObjectId);
 
     // Generate access and refresh tokens
     const tokens = generateAuthTokens({

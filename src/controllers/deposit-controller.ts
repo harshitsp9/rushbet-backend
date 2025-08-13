@@ -1,15 +1,17 @@
+import { DEFAULT_CURRENCY, SATS_IN_BTC } from '@/config/constant';
+import config from '@/config/envConfig';
 import { callDepositApi } from '@/helper/commonHelper';
 import { addOrUpdateDepositRecord } from '@/helper/firebaseHelper';
 import { asyncHandler } from '@/middleware/async-middleware';
-import DepositModel from '@/models/deposit/deposit.model';
-import GamesModel from '@/models/games/games.model';
+import DepositAddressesModel from '@/models/depositAddresses/depositAddresses.model';
 
+import { CURRENCY, PAYMENT_METHOD } from '@/types/enums/enums.common';
 import { PaymentMetadata } from '@/types/types/event.type';
 import { DepositResponse } from '@/types/types/types.common';
 import { generateObjectId } from '@/utils/commonUtils';
 import { errorResponse, HTTP_STATUS_CODES, successResponse } from '@/utils/responseUtils';
 import { Request, Response } from 'express';
-import mongoose, { Types } from 'mongoose';
+import mongoose from 'mongoose';
 
 export const depositBalance = asyncHandler(async (req: Request, res: Response) => {
   // Start a session for transaction
@@ -17,31 +19,28 @@ export const depositBalance = asyncHandler(async (req: Request, res: Response) =
   session.startTransaction(); // Start the transaction
 
   try {
-    const { userId, gameId, gameName, provider, userName } = req;
-    const { targetCurrency = 'SATS', amount } = req.body;
+    const { userId, provider, userName } = req;
+    const { targetCurrency = CURRENCY.SATS, amount, paymentMethods = [PAYMENT_METHOD.LIGHTNING] } = req.body;
+    let filteredPaymentMethods = paymentMethods;
 
-    const gameData = await GamesModel.findById(gameId).session(session);
-    if (!gameData) return errorResponse(res, 'Game does not exist', HTTP_STATUS_CODES.BAD_REQUEST);
-    const currency = gameData.defaultCurrency;
+    if (config.NODE_ENV !== 'production') {
+      filteredPaymentMethods = paymentMethods.filter((method: PAYMENT_METHOD) => method !== PAYMENT_METHOD.TRON);
+    }
 
-    //first create record of deposit
-    //create deposit request
-    const depositReq = new DepositModel({
-      amount,
-      depositMethod: 'lightning',
-      gameId: generateObjectId(gameId),
+    //first create record of deposit address
+    const depositAddress = new DepositAddressesModel({
       userId: generateObjectId(userId),
-      gameName: gameData?.name,
-      provider: gameData.provider,
+      requestedAmount: amount,
+      targetCurrency,
     });
+
+    const currency = DEFAULT_CURRENCY;
 
     const metaData: Partial<PaymentMetadata> = {
       userId,
-      gameId,
-      gameName,
       provider,
       userName,
-      depositId: String(depositReq._id),
+      depositAddressId: String(depositAddress._id),
       type: 'deposit',
     };
 
@@ -51,7 +50,7 @@ export const depositBalance = asyncHandler(async (req: Request, res: Response) =
       amount,
       currency: (currency as string).toUpperCase(),
       target_currency: (targetCurrency as string).toUpperCase(),
-      payment_methods: ['lightning'],
+      payment_methods: filteredPaymentMethods,
       metadata: metaData,
     };
 
@@ -64,28 +63,39 @@ export const depositBalance = asyncHandler(async (req: Request, res: Response) =
       );
 
     //update records
-    depositReq.currency = (response.currency as string).toLowerCase();
-    depositReq.targetCurrency = (response.target_currency as string).toLowerCase();
-    depositReq.targetAmount = response.target_amount as Types.Decimal128;
-    depositReq.sourceId = response.id;
-    depositReq.status = response.status;
-    depositReq.depositRequest = response.payment_method_options?.lightning?.payment_request;
+    depositAddress.lightningAddress = response.payment_method_options?.lightning?.payment_request || null;
+    depositAddress.onChainAddress = response.payment_method_options?.on_chain?.address || null;
+    depositAddress.ethereumAddress = response.payment_method_options?.ethereum?.address || null;
+    depositAddress.tronAddress = response.payment_method_options?.tron?.address || null;
+    depositAddress.targetCurrency = response.target_currency as CURRENCY;
 
-    await depositReq.save({ session });
+    await depositAddress.save({ session });
 
     // Commit the transaction if no errors
     await session.commitTransaction();
 
+    // Calculate the target amount based on the target currency
+    // If the target currency is SATS, convert it to BTC
+    // Otherwise, for USDT and USDC divide the target amount by the exchange rate
+    const targetAmount =
+      response.target_currency === CURRENCY.SATS
+        ? response.target_amount / SATS_IN_BTC
+        : response.target_amount / response.exchange_rate;
+
     successResponse(res, 'Invoice generated successfully.', HTTP_STATUS_CODES.CREATED, {
       lightning: response.payment_method_options?.lightning,
-      depositId: depositReq._id,
+      onchain: response.payment_method_options?.on_chain,
+      ethereum: response.payment_method_options?.ethereum,
+      tron: response.payment_method_options?.tron,
+      depositAddressId: depositAddress._id,
       currency: response.currency,
       amount: response.amount,
-      target_currency: response.target_currency,
-      target_amount: response.target_amount,
+      sourceId: response.id,
+      targetCurrency: response.target_currency,
+      targetAmount,
     });
 
-    addOrUpdateDepositRecord(userId, depositReq._id as string, { status: response.status });
+    addOrUpdateDepositRecord(userId as string, response.id, { status: response.status });
   } catch (error) {
     // Rollback the transaction in case of error
     await session.abortTransaction();

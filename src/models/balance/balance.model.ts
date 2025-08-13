@@ -3,7 +3,11 @@ import { BalanceDocument } from './balance.type';
 
 const balanceSchema = new Schema<BalanceDocument>(
   {
-    balance: {
+    availableBalance: {
+      type: Types.Decimal128,
+      default: 0.0,
+    },
+    withdrawableBalance: {
       type: Types.Decimal128,
       default: 0.0,
     },
@@ -12,20 +16,20 @@ const balanceSchema = new Schema<BalanceDocument>(
       default: 'usd',
       required: true,
     },
-
     gameId: {
       type: Schema.Types.ObjectId,
       ref: 'games',
-      required: true,
-    },
-    last_txn_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'transactions',
+      required: false, // Making it optional for now since some balances might not be game-specific
     },
     userId: {
       type: Schema.Types.ObjectId,
       ref: 'users',
       required: true,
+    },
+    last_txn_id: {
+      type: Schema.Types.ObjectId,
+      ref: 'transactions',
+      required: false,
     },
   },
   {

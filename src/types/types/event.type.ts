@@ -1,9 +1,12 @@
+import { PAYMENT_EVENT_TYPE, PAYMENT_METHOD } from '../enums/enums.common';
+import { PaymentMethodOptions } from './types.common';
+
 export type PaymentEvent = {
   api_version: string;
   data: {
     object: Payment;
   };
-  event_type: string;
+  event_type: PAYMENT_EVENT_TYPE;
   id: string;
   livemode: boolean;
   object: string;
@@ -24,7 +27,7 @@ type Payment = {
   modified: number;
   object: string;
   payment_method_options: PaymentMethodOptions;
-  payment_method_paid_by: string;
+  payment_method_paid_by: PAYMENT_METHOD;
   payment_methods: string[];
   status: string;
   target_amount: number;
@@ -37,9 +40,8 @@ type Payment = {
 };
 
 export type PaymentMetadata = {
-  depositId: string;
+  depositAddressId: string;
   withdrawId: string;
-  gameId: string;
   type: string;
   userId: string;
   offerId?: string;
@@ -47,14 +49,4 @@ export type PaymentMetadata = {
   userName?: string;
   provider?: string;
   gameName?: string;
-};
-
-type PaymentMethodOptions = {
-  lightning: LightningPayment;
-};
-
-type LightningPayment = {
-  id: string;
-  payment_request: string;
-  preimage: string;
 };

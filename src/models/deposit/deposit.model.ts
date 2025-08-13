@@ -32,11 +32,7 @@ const depositSchema = new Schema<DepositDocument>(
     depositMethod: {
       type: String,
     },
-    gameId: {
-      type: Schema.Types.ObjectId,
-      ref: 'games',
-      required: true,
-    },
+
     userId: {
       type: Schema.Types.ObjectId,
       ref: 'users',

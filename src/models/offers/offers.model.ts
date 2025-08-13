@@ -70,11 +70,6 @@ const offerSchema = new Schema<OffersDocument>(
       enum: Object.values(OFFER_AVAIL_ON),
       default: OFFER_AVAIL_ON.DEPOSIT,
     },
-    gameId: {
-      type: Schema.Types.ObjectId,
-      ref: 'games',
-      required: true,
-    },
   },
   {
     timestamps: true,

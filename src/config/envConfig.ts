@@ -25,6 +25,10 @@ const config = {
   EMAIL_USER: process.env.EMAIL_USER as string,
   EMAIL_PASS: process.env.EMAIL_PASS as string,
   EMAIL_FROM: process.env.EMAIL_FROM as string,
+
+  //webhook
+  DEPOSIT_WEBHOOK_SECRET: process.env.DEPOSIT_WEBHOOK_SECRET as string,
+  WITHDRAWAL_WEBHOOK_SECRET: process.env.WITHDRAWAL_WEBHOOK_SECRET as string,
 };
 
 export default config;

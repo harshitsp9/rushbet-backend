@@ -99,20 +99,6 @@ export enum OFFER_AVAILED_STATUS {
   UNPAID = 'unpaid',
 }
 
-export enum MASCOT_METHODS {
-  GAME_LIST = 'Game.List',
-  BANKGROUP_SET = 'BankGroup.Set',
-  PLAYER_SET = 'Player.Set',
-  BONUS_SET = 'Bonus.Set',
-  SESSION_CREATE = 'Session.Create',
-  SESSION_CREATE_DEMO = 'Session.CreateDemo',
-  SESSION_CLOSE = 'Session.Close',
-  HISTORY_GET_TOKEN = 'History.GetToken',
-  GET_BALANCE = 'getBalance',
-  WITHDRAW_DEPOSIT = 'withdrawAndDeposit',
-  ROLLBACK_TRANSACTION = 'rollbackTransaction',
-}
-
 export enum AUTH_PROVIDER {
   EMAIL = 'email',
   TELEGRAM = 'telegram',
@@ -127,4 +113,42 @@ export enum OTP_STATUS {
   ACTIVE = 'active',
   USED = 'used',
   EXPIRED = 'expired',
+}
+
+export enum CURRENCY {
+  SATS = 'SATS',
+  USDT = 'USDT',
+  USDC = 'USDC',
+}
+
+export enum PAYMENT_METHOD {
+  LIGHTNING = 'lightning',
+  ONCHAIN = 'onchain',
+  ETHEREUM = 'ethereum',
+  TRON = 'tron',
+}
+
+export enum PAYMENT_STATUS {
+  UNPAID = 'unpaid',
+  PAID = 'paid',
+  CANCELLED = 'cancelled',
+  EXPIRED = 'expired',
+  PARTIAL_PAID = 'partial_paid', // Custom status used internally; not provided by Speed.
+  PENDING = 'pending', // Custom status used internally; not provided by Speed.
+  // NOTE: Additional status codes may be sent by Speed that are not defined here.
+}
+
+// All sent by Speed
+export enum PAYMENT_EVENT_TYPE {
+  PAID = 'payment.paid',
+  CONFIRMED = 'payment.confirmed',
+  EXPIRED = 'payment.expired',
+  CANCELLED = 'payment.cancelled',
+}
+
+export enum DEPOSIT_ADDRESS_KEY {
+  LIGHTNING_ADDRESS = 'lightningAddress',
+  ONCHAIN_ADDRESS = 'onChainAddress',
+  ETHEREUM_ADDRESS = 'ethereumAddress',
+  TRON_ADDRESS = 'tronAddress',
 }

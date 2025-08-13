@@ -53,26 +53,3 @@ export const gameErrorResponse = (res: Response, message: string, statusCode: nu
     code: gameCode,
   });
 };
-
-// Success response for Mascot Game
-export const mascotGameSuccessResponse = (res: Response, id: number | string, result: any) => {
-  const response = {
-    jsonrpc: '2.0',
-    id,
-    result,
-  };
-  res.status(200).json(response);
-};
-
-// Error response for Mascot Game
-export const mascotGameErrorResponse = (res: Response, id: number | string, code: number, message: string) => {
-  const response = {
-    jsonrpc: '2.0',
-    id,
-    error: {
-      code,
-      message,
-    },
-  };
-  res.status(200).json(response);
-};

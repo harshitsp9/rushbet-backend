@@ -1,11 +1,10 @@
 import { OFFER_AVAIL_ON, OFFER_STATUS } from '@/types/enums/enums.common';
-import { Document, Double, Types } from 'mongoose';
+import { Document, Double } from 'mongoose';
 
 interface Offers {
   order: number;
   isMultiUse: boolean;
   maxUseCount: number;
-  gameId: Types.ObjectId;
   remainingUseCount: number;
   startDate: Date;
   endDate: Date;

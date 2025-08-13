@@ -1,7 +1,6 @@
 import { Document, Types } from 'mongoose';
 
 interface Deposit {
-  gameId: Types.ObjectId;
   userId: Types.ObjectId;
   amount: Types.Decimal128;
   currency: string;

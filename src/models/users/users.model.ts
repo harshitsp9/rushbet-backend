@@ -56,7 +56,6 @@ const userSchema = new Schema<UserDocument>(
     lastLogin: {
       type: Date,
     },
-    // Removed gameId field completely
   },
   {
     timestamps: true,

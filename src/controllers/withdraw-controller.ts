@@ -9,9 +9,10 @@ import { errorResponse, HTTP_STATUS_CODES, successResponse } from '@/utils/respo
 import { Request, Response } from 'express';
 import mongoose, { Types } from 'mongoose';
 import { currentDayJsObject } from '@/helper/dateHelper';
+import { syncBalanceToFirebase } from '@/helper/balanceHelper';
 
 export const withdrawBalance = asyncHandler(async (req: Request, res: Response) => {
-  const { userId, gameId, userName } = req;
+  const { userId, gameId } = req;
   const { targetCurrency = 'SATS', amount, targetAddress } = req.body;
   let { currency = 'usd' } = req.body;
   currency = (currency as string).toLowerCase();
@@ -37,7 +38,7 @@ export const withdrawBalance = asyncHandler(async (req: Request, res: Response) 
 
   // Validate user balance
   const balanceInfo = await BalanceModel.findOne({ userId, gameId, currency });
-  const availableBalance = formattedBalance(balanceInfo?.balance || 0);
+  const availableBalance = formattedBalance(balanceInfo?.withdrawableBalance || 0);
   if (amount > availableBalance) {
     return errorResponse(
       res,
@@ -54,12 +55,12 @@ export const withdrawBalance = asyncHandler(async (req: Request, res: Response) 
     const updatedBalance = await BalanceModel.findByIdAndUpdate(
       balanceInfo?._id,
       {
-        $inc: { balance: -amount },
+        $inc: { withdrawableBalance: -amount, availableBalance: -amount },
       },
       { session, new: true } // Ensure update happens inside the transaction
     );
 
-    const balance = formattedBalance(updatedBalance?.balance || 0);
+    const balance = formattedBalance(updatedBalance?.withdrawableBalance || 0);
 
     //create withdraw request
     const withdrawRequest = new WithdrawModel({
@@ -77,13 +78,6 @@ export const withdrawBalance = asyncHandler(async (req: Request, res: Response) 
       target_currency: (targetCurrency as string).toUpperCase(),
       withdraw_method: 'lightning',
       withdraw_request: targetAddress,
-      metadata: {
-        userId,
-        gameId,
-        userName,
-        withdrawId: withdrawRequest._id,
-        type: 'withdraw',
-      },
     };
 
     const response: WithdrawApiResponse = await callWithdrawalApi(authKey, body);
@@ -107,6 +101,15 @@ export const withdrawBalance = asyncHandler(async (req: Request, res: Response) 
     // Commit the transaction if no errors
     await session.commitTransaction();
 
+    // Sync balance to Firebase in background (without await)
+    if (updatedBalance) {
+      syncBalanceToFirebase(userId as string, String(updatedBalance._id), {
+        currency: updatedBalance.currency,
+        availableBalance: parseFloat(updatedBalance.availableBalance.toString()),
+        withdrawableBalance: parseFloat(updatedBalance.withdrawableBalance.toString()),
+      });
+    }
+
     successResponse(res, 'Withdrawal request created successfully.', HTTP_STATUS_CODES.OK, {
       withdrawId: withdrawRequest._id,
       amount: response.amount,
@@ -117,7 +120,7 @@ export const withdrawBalance = asyncHandler(async (req: Request, res: Response) 
     });
 
     //fire-store
-    addOrUpdateWithdrawRecord(userId, withdrawRequest._id as string, {
+    addOrUpdateWithdrawRecord(String(userId), withdrawRequest._id as string, {
       status: response?.status || 'pending',
     });
   } catch (error) {

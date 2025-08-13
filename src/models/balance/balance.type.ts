@@ -3,7 +3,8 @@ import { Document, Types } from 'mongoose';
 interface Balance {
   gameId: Types.ObjectId;
   userId: Types.ObjectId;
-  balance: Types.Decimal128;
+  availableBalance: Types.Decimal128;
+  withdrawableBalance: Types.Decimal128;
   currency: string;
   last_txn_id: Types.ObjectId;
 }

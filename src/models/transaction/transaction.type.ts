@@ -1,7 +1,6 @@
 import { Document, Types } from 'mongoose';
 
 interface Transaction {
-  gameId: Types.ObjectId;
   userId: Types.ObjectId;
   eventId: Types.ObjectId | null;
   amount: Types.Decimal128;

@@ -29,11 +29,6 @@ const transactionSchema = new Schema<TransactionDocument>(
       type: Number,
       enum: [1, 2, 3, 4, 5, 6],
     },
-    gameId: {
-      type: Schema.Types.ObjectId,
-      ref: 'games',
-      required: true,
-    },
     eventId: {
       type: Schema.Types.ObjectId,
       ref: 'game-events',

@@ -23,23 +23,40 @@ export interface SortFields {
   [key: string]: 1 | -1;
 }
 
+export type LightningPayment = {
+  id: string;
+  payment_request: string;
+  preimage: string | null;
+};
+
+export type OnChainPayment = {
+  id: string;
+  address: string;
+};
+
+export type EthereumPayment = {
+  id: string;
+  address: string;
+};
+
+export type TronPayment = {
+  id: string;
+  address: string;
+};
+
 export interface PaymentMethodOptions {
-  processing_fee: number;
-  estimated_time: string;
-  limits: {
-    min: number;
-    max: number;
-  };
-  lightning: {
-    id: string;
-    payment_request: string;
-  };
+  lightning?: LightningPayment;
+  on_chain?: OnChainPayment;
+  ethereum?: EthereumPayment;
+  tron?: TronPayment;
 }
 
 export interface DepositResponse {
   id: string;
   status: string;
   amount: number;
+  target_amount: number;
+  exchange_rate: number;
   currency: string;
   payment_methods: string[];
   payment_method_options: PaymentMethodOptions;
@@ -74,4 +91,8 @@ export interface WithdrawRequestBody {
   withdraw_method: string;
   withdraw_request: string;
   metadata?: Record<string, any>; // Optional metadata object
+}
+
+export interface ValidatePaymentAddressRequestBody {
+  withdraw_request: string;
 }

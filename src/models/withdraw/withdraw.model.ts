@@ -34,11 +34,7 @@ const withdrawSchema = new Schema<WithdrawDocument>(
     withdrawMethod: {
       type: String,
     },
-    gameId: {
-      type: Schema.Types.ObjectId,
-      ref: 'games',
-      required: true,
-    },
+
     userId: {
       type: Schema.Types.ObjectId,
       ref: 'users',
